@@ -1,6 +1,6 @@
 {
   "name": "@netacoltd/capacitor-system-stats",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Capacitor plugin that provides system-level metrics such as CPU usage, RAM, and disk storage on both Android and iOS devices.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

@@ -12,6 +12,8 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 
 @CapacitorPlugin(name = "SystemStats")
@@ -24,28 +26,20 @@ public class SystemStatsPlugin extends Plugin {
         
         // CPU Usage (Approximation)
         try {
-            RandomAccessFile reader = new RandomAccessFile("/proc/stat", "r");
-            String load = reader.readLine();
-            String[] toks = load.split(" +");
-
-            long idle1 = Long.parseLong(toks[4]);
-            long cpu1 = Long.parseLong(toks[1]) + Long.parseLong(toks[2]) + Long.parseLong(toks[3])
-                        + Long.parseLong(toks[5]) + Long.parseLong(toks[6]) + Long.parseLong(toks[7]);
-            Thread.sleep(360);
-            reader.seek(0);
-            load = reader.readLine();
-            reader.close();
-
-            toks = load.split(" +");
-            long idle2 = Long.parseLong(toks[4]);
-            long cpu2 = Long.parseLong(toks[1]) + Long.parseLong(toks[2]) + Long.parseLong(toks[3])
-                        + Long.parseLong(toks[5]) + Long.parseLong(toks[6]) + Long.parseLong(toks[7]);
-
-            float cpuUsage = (float) (cpu2 - cpu1) / ((cpu2 + idle2) - (cpu1 + idle1)) * 100;
+            Process process = Runtime.getRuntime().exec("top -n 1");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            String cpuUsage = null;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("CPU")) {
+                    cpuUsage = line;
+                    break;
+                }
+            }
             ret.put("cpuUsage", cpuUsage);
         } catch (Exception e) {
             Log.e("SystemStatsPlugin", "getSystemStats: ", e);
-            ret.put("cpuUsage", -1);
+            ret.put("cpuUsage", null);
         }
 
         // RAM Usage
