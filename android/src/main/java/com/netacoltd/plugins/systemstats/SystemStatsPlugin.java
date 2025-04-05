@@ -4,6 +4,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Environment;
 import android.os.StatFs;
+import android.util.Log;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -43,6 +44,7 @@ public class SystemStatsPlugin extends Plugin {
             float cpuUsage = (float) (cpu2 - cpu1) / ((cpu2 + idle2) - (cpu1 + idle1)) * 100;
             ret.put("cpuUsage", cpuUsage);
         } catch (Exception e) {
+            Log.e("SystemStatsPlugin", "getSystemStats: ", e);
             ret.put("cpuUsage", -1);
         }
 
