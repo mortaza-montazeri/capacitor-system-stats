@@ -3,8 +3,13 @@ import { WebPlugin } from '@capacitor/core';
 import type { SystemStatsPlugin } from './definitions';
 
 export class SystemStatsWeb extends WebPlugin implements SystemStatsPlugin {
-  async echo(options: { value: string }): Promise<{ value: string }> {
-    console.log('ECHO', options);
-    return options;
-  }
+  getSystemStats(): Promise<{ cpuUsage: number; totalRAM: number; availableRAM: number; totalStorage: number; availableStorage: number; }> {
+    return Promise.resolve({
+      availableRAM: 0,
+      availableStorage: 0,
+      cpuUsage: 0,
+      totalRAM: 0,
+      totalStorage: 0
+    });
+  }  
 }

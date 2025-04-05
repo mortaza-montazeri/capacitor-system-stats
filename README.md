@@ -11,9 +11,23 @@ npx cap sync
 
 ## API
 
-<docgen-index></docgen-index>
+<docgen-index>
+
+* [`getSystemStats()`](#getsystemstats)
+
+</docgen-index>
 
 <docgen-api>
-<!-- run docgen to generate docs from the source -->
-<!-- More info: https://github.com/ionic-team/capacitor-docgen -->
+<!--Update the source file JSDoc comments and rerun docgen to update the docs below-->
+
+### getSystemStats()
+
+```typescript
+getSystemStats() => Promise<{ cpuUsage: number; totalRAM: number; availableRAM: number; totalStorage: number; availableStorage: number; }>
+```
+
+**Returns:** <code>Promise&lt;{ cpuUsage: number; totalRAM: number; availableRAM: number; totalStorage: number; availableStorage: number; }&gt;</code>
+
+--------------------
+
 </docgen-api>
