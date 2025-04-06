@@ -1,10 +1,11 @@
 package com.netacoltd.plugins.systemstats;
 
+import android.os.Process;
 import android.os.SystemClock;
 
 public class CpuMonitor {
-    private long lastAppCpuTime = 0;
-    private long lastWallTime = 0;
+    private long lastAppCpuTime = Process.getElapsedCpuTime();
+    private long lastWallTime = SystemClock.elapsedRealtime();
 
     public float getAppCpuUsage() {
         long appCpuTime = Process.getElapsedCpuTime(); // in ms
