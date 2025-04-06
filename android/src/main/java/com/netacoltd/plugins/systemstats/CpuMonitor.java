@@ -7,6 +7,8 @@ public class CpuMonitor {
     private long lastAppCpuTime = Process.getElapsedCpuTime();
     private long lastWallTime = SystemClock.elapsedRealtime();
 
+    private final int numCores = Runtime.getRuntime().availableProcessors();
+
     public float getAppCpuUsage() {
         long appCpuTime = Process.getElapsedCpuTime(); // in ms
         long wallTime = SystemClock.elapsedRealtime(); // in ms
@@ -25,6 +27,7 @@ public class CpuMonitor {
 
         if (wallDelta == 0) return 0f;
 
-        return ((float) cpuDelta / wallDelta) * 100f;
+        float rawUsage = ((float) cpuDelta / wallDelta) * 100f;
+        return rawUsage / numCores;
     }
 }
