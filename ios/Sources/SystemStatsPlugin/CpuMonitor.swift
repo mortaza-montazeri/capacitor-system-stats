@@ -1,29 +1,40 @@
 import Foundation
 
 class CpuMonitor {
-    private var lastAppCpuTime: TimeInterval = ProcessInfo.processInfo.systemUptime
-    private var lastTotalCpuTime: TimeInterval = CpuMonitor.getTotalCpuTime()
+    private var lastAppTimeMs: UInt64 = 0
+    private var lastTotalTimeMs: UInt64 = 0
     private let numCores: Int = ProcessInfo.processInfo.processorCount
 
+    init() {
+        let (app, total) = CpuMonitor.sampleTimes()
+        lastAppTimeMs = app
+        lastTotalTimeMs = total
+    }
+
     func getAppCpuUsage() -> Float {
-        let currentAppTime = ProcessInfo.processInfo.systemUptime
-        let currentTotalTime = CpuMonitor.getTotalCpuTime()
+        let (currentAppTimeMs, currentTotalTimeMs) = CpuMonitor.sampleTimes()
 
-        let appDelta = currentAppTime - lastAppCpuTime
-        let totalDelta = currentTotalTime - lastTotalCpuTime
+        let appDelta = currentAppTimeMs > lastAppTimeMs ? currentAppTimeMs - lastAppTimeMs : 0
+        let totalDelta = currentTotalTimeMs > lastTotalTimeMs ? currentTotalTimeMs - lastTotalTimeMs : 0
 
-        lastAppCpuTime = currentAppTime
-        lastTotalCpuTime = currentTotalTime
+        lastAppTimeMs = currentAppTimeMs
+        lastTotalTimeMs = currentTotalTimeMs
 
         guard totalDelta > 0 else { return 0 }
 
-        // Similar to Android: appDelta / totalDelta * 100 / numCores
-        let rawUsage = Float(appDelta / totalDelta) * 100.0
+        let rawUsage = Float(appDelta) / Float(totalDelta) * 100
         return rawUsage / Float(numCores)
     }
 
-    /// Returns the system's total CPU time (sum of all core activities) in seconds.
-    private static func getTotalCpuTime() -> TimeInterval {
+    /// Synchronously samples app uptime and total CPU time (in milliseconds)
+    private static func sampleTimes() -> (appTimeMs: UInt64, totalCpuTimeMs: UInt64) {
+        let appTimeMs = UInt64(ProcessInfo.processInfo.systemUptime * 1000)
+        let totalCpuTimeMs = getTotalCpuTime()
+        return (appTimeMs, totalCpuTimeMs)
+    }
+
+    /// Returns total CPU time (all threads of current process) in milliseconds
+    private static func getTotalCpuTime() -> UInt64 {
         var threadsList: thread_act_array_t?
         var threadCount = mach_msg_type_number_t(0)
 
@@ -32,7 +43,7 @@ class CpuMonitor {
             return 0
         }
 
-        var totalTime: TimeInterval = 0
+        var totalTimeSeconds: TimeInterval = 0
 
         for i in 0..<Int(threadCount) {
             var threadInfoData = thread_basic_info()
@@ -44,16 +55,18 @@ class CpuMonitor {
                 }
             }
 
-            if kr == KERN_SUCCESS {
+            if kr == KERN_SUCCESS && (threadInfoData.flags & TH_FLAGS_IDLE) == 0 {
                 let userTime = TimeInterval(threadInfoData.user_time.seconds) + TimeInterval(threadInfoData.user_time.microseconds) / 1_000_000
                 let systemTime = TimeInterval(threadInfoData.system_time.seconds) + TimeInterval(threadInfoData.system_time.microseconds) / 1_000_000
-                totalTime += userTime + systemTime
+                totalTimeSeconds += userTime + systemTime
             }
         }
 
-        // Free the thread list
-        vm_deallocate(mach_task_self_, vm_address_t(UInt(bitPattern: threads)), vm_size_t(threadCount) * vm_size_t(MemoryLayout<thread_t>.stride))
+        // Clean up
+        vm_deallocate(mach_task_self_,
+                      vm_address_t(UInt(bitPattern: threadsList)),
+                      vm_size_t(threadCount) * UInt64(MemoryLayout<thread_t>.stride))
 
-        return totalTime
+        return UInt64(totalTimeSeconds * 1000)
     }
 }
