@@ -9,6 +9,7 @@ import Capacitor
 public class SystemStatsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "SystemStatsPlugin"
     public let jsName = "SystemStats"
+    private let cpuMonitor = CpuMonitor()
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "getSystemStats", returnType: CAPPluginReturnPromise)
     ]
@@ -16,9 +17,8 @@ public class SystemStatsPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func getSystemStats(_ call: CAPPluginCall) {
          var result: [String: Any] = [:]
         
-        // CPU Usage (Approximation)
-        let usage = ProcessInfo.processInfo.systemUptime
-        result["cpuUsage"] = usage
+        // CPU Usage        
+        result["cpuUsage"] = cpuMonitor.getAppCpuUsage()
         
         // RAM Usage (Used and Free Memory)        
         result["totalRAM"] = ProcessInfo.processInfo.physicalMemory
