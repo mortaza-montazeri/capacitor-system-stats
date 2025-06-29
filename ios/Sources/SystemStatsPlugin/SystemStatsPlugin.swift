@@ -10,7 +10,7 @@ public class SystemStatsPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "SystemStatsPlugin"
     public let jsName = "SystemStats"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "echo", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getSystemStats", returnType: CAPPluginReturnPromise)
     ]
 
     @objc func getSystemStats(_ call: CAPPluginCall) {
@@ -22,7 +22,7 @@ public class SystemStatsPlugin: CAPPlugin, CAPBridgedPlugin {
         
         // RAM Usage (Used and Free Memory)        
         result["totalRAM"] = ProcessInfo.processInfo.physicalMemory
-        result["availableRAM"] = getFreeMemory()
+        result["availableRAM"] = getFreeRAM()
         
         // Free Disk Space
         if let systemAttributes = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory()),
@@ -35,9 +35,26 @@ public class SystemStatsPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve(result)
     }
 
-    private func getFreeMemory() -> UInt64 {
-        let vmStats = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory())
-        let freeMemory = vmStats?[.systemFreeSize] as? UInt64 ?? 0
+    private func getFreeRAM() -> UInt64 {
+       var size = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.stride / MemoryLayout<integer_t>.stride)
+        var vmStats = vm_statistics64()
+
+        let hostPort: host_t = mach_host_self()
+        let result = withUnsafeMutablePointer(to: &vmStats) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(size)) {
+                host_statistics64(hostPort, HOST_VM_INFO64, $0, &size)
+            }
+        }
+
+        if result != KERN_SUCCESS {
+            return 0
+        }
+
+        // Page size in bytes
+        let pageSize = UInt64(vm_kernel_page_size)
+
+        // Free memory in bytes = free_count * page size
+        let freeMemory = UInt64(vmStats.free_count) * pageSize
         return freeMemory
     }
 }
