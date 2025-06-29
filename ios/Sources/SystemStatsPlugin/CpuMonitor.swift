@@ -61,7 +61,7 @@ class CpuMonitor {
         // Free memory
         vm_deallocate(mach_task_self_,
                       vm_address_t(UInt(bitPattern: threadsList)),
-                      vm_size_t(threadCount) * UInt64(MemoryLayout<thread_t>.stride))
+                      vm_size_t(threadCount) * UInt(MemoryLayout<thread_t>.stride))
 
         return UInt64(totalTimeSeconds * 1000) // milliseconds
     }
