@@ -1,6 +1,4 @@
 import Foundation
-import MachO
-import Mach
 
 class CpuMonitor {
     private var lastAppCpuTime: TimeInterval = ProcessInfo.processInfo.systemUptime
